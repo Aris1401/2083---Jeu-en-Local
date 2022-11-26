@@ -20,8 +20,7 @@ public class Bullet extends GameObject{
 	
 	public void setVelocity(Vector2 vel) {
 		this.velocity = vel;
-	}
-	
+	} 
 	
 	@Override
 	public void drawObject(Graphics2D g) {

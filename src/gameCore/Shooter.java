@@ -130,4 +130,12 @@ public class Shooter {
 		
 		players.get(index).setPuppetGunFlipped(isFlipped);
 	}
+	
+	public void manageGun(String username, float rotation, boolean isFlipped, Vector2 position) {
+		int index = getJoueurIndex(username);
+		
+		players.get(index).setPuppetGunRotation(rotation);
+		players.get(index).setPuppetGunFlipped(isFlipped);
+		players.get(index).setPuppetGunPosition(position);
+	}
 }

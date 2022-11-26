@@ -99,8 +99,7 @@ public class GameClient extends Thread{
 
 	
 	private void handlePlayerDetails(Packet03_PlayerDetails packet) {
-		core.getCurrentRunningGame().manageGunRotations(packet.getUsername(), packet.getRotationDegrees());
-		core.getCurrentRunningGame().manageGunFlip(packet.getUsername(), packet.isGunFlipped());
+		core.getCurrentRunningGame().manageGun(packet.getUsername(), packet.getRotationDegrees(), packet.isGunFlipped(), packet.getGunPosition());
 	}
 
 	private void handleMove(Packet02_Movement packet) {

@@ -28,17 +28,22 @@ public class Joueur extends GameObject{
 	float acceleration = .05f;
 	
 //	Guns
+	Vector2 gunDesiredPosition = new Vector2();
+	
 	Gun gun;
+	float fireTimer = 0f;
+	boolean startTimer = false;
 	
 	Object parent;
 	
 	// Timer
 	float timer = 0f;
-	float maxTime = 10f;
+	float maxTime = 5f;
 	
 	Vector2 puppetPosition = new Vector2();
 	float puppetGunRotation = 0f;
 	boolean puppetGunRotated = false;
+	Vector2 puppetGunPosition = new Vector2();
 	
 	public void setParent(Object parent) {
 		this.parent = parent;
@@ -83,39 +88,57 @@ public class Joueur extends GameObject{
 	}
 	
 	public void update(Game core, float delta) {
-		// Translate gun w/ player
-		gun.setPosition(this.position().add(new Vector2(40, 0)));
+		timer += delta;
+		
+		if (startTimer) {
+			fireTimer += delta;
+			
+			if (fireTimer > gun.getFireRate()) {
+				gun.setCanFire(true);
+				fireTimer = 0f;
+				startTimer = false;
+			}
+		}
 		
 		if (isNetworkMaster) {
-			timer += delta;
-			
 			// Player movement
 			manageMovement(core, delta);
 			
-			if (core.input().isButton(MouseEvent.BUTTON1)) {
-				// Add recoil
-				Vector2 recoil = new Vector2(core.input().getMouseX() - position().x - (scale().x / 2), core.input().getMouseY() - position().y - (scale().y / 2));
-				recoil.normalize();
-				addRecoil(recoil.multiply(-0.2f));
-				
-				// Bullet instance point
-				Vector2 instancePoint = new Vector2(position().x + 64, gun.position().y + (64 / 2));
-				instancePoint = instancePoint.rotatePoint(position().x + (scale().x / 2), position().y + (scale().y / 2), gun.getRotationDegrees());
-				
-				gun.fire();
-				
-				// Instance bullet
+			if (core.input().isKeyDown(KeyEvent.VK_R)) {
+				gun.reloadGun();	
+			}
+			
+			if (core.input().isButton(MouseEvent.BUTTON1) && gun.getCanFire()) {
+				if (gun.getBulletFired() < gun.getMagazine()) {
+					// Add recoil
+					Vector2 recoil = new Vector2(core.input().getMouseX() - position().x - (scale().x / 2), core.input().getMouseY() - position().y - (scale().y / 2));
+					recoil.normalize();
+					addRecoil(recoil.multiply(-0.2f));
+					
+					// Bullet instance point
+					Vector2 instancePoint = new Vector2(position().x + (64 + (64 / 2)), position().y + (64 / 2));
+					instancePoint = instancePoint.rotatePoint(position().x + (scale().x / 2), position().y + (scale().y / 2), gun.getRotationDegrees());
+					
+					gun.fire();
+					
+					// Instance bullet
 //				((Shooter) parent).instanceBullet(instancePoint, recoil); 
-				
-				Packet04_BulletSpawn packet = new Packet04_BulletSpawn(this.getUsername(), recoil, instancePoint);
-				packet.writeData(core.getGameClient());
+					
+					Packet04_BulletSpawn packet = new Packet04_BulletSpawn(this.getUsername(), recoil, instancePoint);
+					packet.writeData(core.getGameClient());
+					
+					startTimer = true;
+					gun.setCanFire(false);	
+				} else {
+					gun.playEmptySound();
+				}
 			}
 			
 			// Gun rotation
 			manageGunRotation(core);
 			
 			if (timer > maxTime) {
-				System.out.println("Timeout: " + this.position().toString());
+//				System.out.println("Timeout: " + this.position().toString());
 				
 				Packet02_Movement packet = new Packet02_Movement(this.getUsername(), this.position());
 				packet.writeData(core.getGameClient());	
@@ -123,19 +146,31 @@ public class Joueur extends GameObject{
 				timer = 0f;
 			}
 		} else {
-			this.position = this.position.linearInterpolate(puppetPosition, delta * acceleration);
+			this.position = this.position.linearInterpolate(puppetPosition, delta * .1f);
 			
 			gun.setRotationOrigin(position().x, position().y + (scale().y / 2));
 			gun.setRotationDegrees(puppetGunRotation);
+			gun.setPosition(puppetGunPosition);
 			
 			gun.flipImage(puppetGunRotated);
 		}
 	}
 	
 	void manageGunRotation(Game core) {
-		Vector2 toMousePosition = new Vector2(core.input().getMouseY() - position().y - (scale().y / 2), core.input().getMouseX() - position().x - (scale().x / 2));
-		gun.setRotationOrigin(position().x, position().y + (scale().y / 2));
-		gun.setRotationDegrees((float) Math.atan2(toMousePosition.x, toMousePosition.y));
+		Vector2 toMousePosition = new Vector2(core.input().getMouseY() - gun.position().y - (scale().y / 2), core.input().getMouseX() - gun.position().x - (scale().x / 2));
+//		gun.setRotationOrigin(position().x, position().y + (scale().y / 2));
+		
+		Vector2 gunDesiredPositionRotation = new Vector2(core.input().getMouseY() - position().y - (scale().y / 2), core.input().getMouseX() - position().x - (scale().x / 2));
+		float desiredRotation = (float) Math.atan2(gunDesiredPositionRotation.x, gunDesiredPositionRotation.y);
+		
+		gunDesiredPosition = position.add(new Vector2(30, 0));
+		gunDesiredPosition = gunDesiredPosition.rotatePoint(position().x, position().y, desiredRotation);
+		
+//		gun.setRotationDegrees((float) Math.atan2(toMousePosition.x, toMousePosition.y));
+		if (!gun.isReloading)
+			gun.setRotationDegrees(desiredRotation);
+		
+		gun.setPosition(gunDesiredPosition);
 		
 		float rotationAngle = Math.signum(core.input().getMouseX() - (position().x + (scale().x / 2)));
 		boolean flipped = false;
@@ -145,7 +180,7 @@ public class Joueur extends GameObject{
 		
 		gun.flipImage(flipped);
 		
-		Packet03_PlayerDetails details = new Packet03_PlayerDetails(this.getUsername(), gun.getRotationDegrees(), flipped);
+		Packet03_PlayerDetails details = new Packet03_PlayerDetails(this.getUsername(), gun.getRotationDegrees(), flipped, gunDesiredPosition);
 		details.writeData(core.getGameClient());
 	}
 	
@@ -194,6 +229,10 @@ public class Joueur extends GameObject{
 	
 	public void setPuppetGunFlipped(boolean isFlipped) {
 		this.puppetGunRotated = isFlipped;
+	}
+	
+	public void setPuppetGunPosition(Vector2 position) {
+		this.puppetGunPosition = position;
 	}
 	
 	public void destroyPlayer(Game core) {

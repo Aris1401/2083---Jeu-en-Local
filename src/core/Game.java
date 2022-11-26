@@ -1,6 +1,7 @@
 package core;
 
 import java.awt.Point;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
 import javax.swing.JFrame;
@@ -21,7 +22,7 @@ public class Game implements Runnable{
 	
 	//Updates propreties
 	int FPS_CAP = 120;
-	int UPDATE_TICK = 70;
+	int UPDATE_TICK = 60;
 	double lastTimeCheck = 0;
 	
 	//Game thread
@@ -44,6 +45,8 @@ public class Game implements Runnable{
 	// Network propreties
 	GameServer server;
 	GameClient client;
+	
+	boolean isServer = false;
 	
 	public Game() {
 		initialiserGame();
@@ -81,11 +84,15 @@ public class Game implements Runnable{
 		// Network stuff
 		if (JOptionPane.showConfirmDialog(gameFrame.getGameFrame(), "Voule vous etre le serveur?") == JOptionPane.YES_OPTION) {
 			server = new GameServer(this);
+			isServer = true;
 			server.start();
 		}
 		
+		if (isServer)
+			client = new GameClient(this, "localhost");
+		else 
+			client = new GameClient(this, JOptionPane.showInputDialog(gameFrame.getGameFrame(), "Entrez server Ip:"));
 		
-		client = new GameClient(this, JOptionPane.showInputDialog(gameFrame.getGameFrame(), "Entrez server Ip:"));
 		client.start();
 		
 		//Game classes
@@ -132,11 +139,11 @@ public class Game implements Runnable{
 		}
 	}
 	
-	void updateGame(float delta) {
-		input.update();
-		
+	void updateGame(float delta) {				
 		if (gameIsRunning)
 			this.updatePlaying(delta);
+		
+		input.update();
 	}
 	
 	void updatePlaying(float delta) {

@@ -77,7 +77,7 @@ public class GameServer extends Thread{
 			break;
 		case MOVE:
 			packet = new Packet02_Movement(data);
-			System.out.println("Player " + ((Packet02_Movement) packet).getUsername() + " moved to " + ((Packet02_Movement) packet).getPosition());
+//			System.out.println("Player " + ((Packet02_Movement) packet).getUsername() + " moved to " + ((Packet02_Movement) packet).getPosition());
 			this.handleMove((Packet02_Movement) packet);
 			break;
 		case PLAYER_DETAILS:
@@ -101,6 +101,7 @@ public class GameServer extends Thread{
 			int joueurIndex = getJoueurIndex(packet.getUsername());
 			this.joueursConnectees.get(joueurIndex).setPuppetGunRotation(packet.getRotationDegrees());
 			this.joueursConnectees.get(joueurIndex).setPuppetGunFlipped(packet.isGunFlipped());
+			this.joueursConnectees.get(joueurIndex).setPuppetGunPosition(packet.getGunPosition());
 			packet.writeData(this);
 		}
 	}
