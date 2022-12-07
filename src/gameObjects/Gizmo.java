@@ -26,7 +26,7 @@ public class Gizmo extends GameObject{
 	}
 	
 	@Override
-	public void drawObject(Graphics2D g) {
+	public void drawObject(Graphics2D g, Camera camera) {
 		AffineTransform oldTrans = g.getTransform();
 		
 		g.rotate(getRotationDegrees(), startPos.x, startPos.y);

@@ -3,14 +3,18 @@ package gameObjects;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 
 import core.Game;
 import engineClasses.Vector2;
-import gameCore.Shooter;
+import gameObjects.guns.Desert_Eagle;
+import gameObjects.guns.Gun;
+import gameObjects.guns.Rifle;
+import gameObjects.guns.WeaponManager;
 import net.packets.Packet02_Movement;
 import net.packets.Packet03_PlayerDetails;
-import net.packets.Packet04_BulletSpawn;
+import net.packets.Packet05_WeaponSwitch;
+import net.packets.Packet06_Died;
+import net.packets.Packet07_StartGame;
 
 public class Joueur extends GameObject{
 	String username = "NULL";
@@ -31,19 +35,25 @@ public class Joueur extends GameObject{
 	Vector2 gunDesiredPosition = new Vector2();
 	
 	Gun gun;
-	float fireTimer = 0f;
-	boolean startTimer = false;
+	WeaponManager weaponManager;
+	
+	boolean equipGun = false;
 	
 	Object parent;
+	
+	// Entity propreties
+	float hp = 1000f;
+	boolean alive = true;
 	
 	// Timer
 	float timer = 0f;
 	float maxTime = 5f;
 	
 	Vector2 puppetPosition = new Vector2();
-	float puppetGunRotation = 0f;
-	boolean puppetGunRotated = false;
 	Vector2 puppetGunPosition = new Vector2();
+	float puppetGunRotation = 0f;
+	float puppetHp = hp;
+	boolean puppetGunRotated = false;
 	
 	public void setParent(Object parent) {
 		this.parent = parent;
@@ -69,18 +79,25 @@ public class Joueur extends GameObject{
 		this.setSprite("Imposter.png");
 		this.setMaterial(new Color(106, 106, 106));
 		
+		weaponManager = new WeaponManager();
 		if (core != null) {
-			gun = new Gun(core);
-			gun.setSprite("Rifle.png");			
+			weaponManager.addGun(new Rifle(core));
+			weaponManager.addGun(new Desert_Eagle(core));
 		}
 	}
 	
 	@Override
-	public void drawObject(Graphics2D g) {
+	public void drawObject(Graphics2D g, Camera camera) {
 		g.setColor(material);
-		g.drawImage(sprite, (int) this.position().x, (int) (this.position().y + animation), (int) this.scale().x, (int) this.scale().y, null);
+		
+		Vector2 offset = new Vector2();
+		if (camera != null) {
+			offset = camera.getPosition().clone();
+		}
+		
+		g.drawImage(sprite, (int) (this.position().x - offset.x), (int) ((this.position().y + animation) - offset.y), (int) this.scale().x, (int) this.scale().y, null);
 //		g.fillRect((int) this.position().x, (int) (this.position().y + animation), (int) this.scale().x, (int) this.scale().y);
-		g.drawString(username, this.position().x, this.position().y - (2) + animation);
+		g.drawString(username, this.position().x - offset.x, this.position().y - (2) + animation - offset.y);
 	}
 	
 	public void setVelocity(Vector2 velocity) {
@@ -90,85 +107,60 @@ public class Joueur extends GameObject{
 	public void update(Game core, float delta) {
 		timer += delta;
 		
-		if (startTimer) {
-			fireTimer += delta;
-			
-			if (fireTimer > gun.getFireRate()) {
-				gun.setCanFire(true);
-				fireTimer = 0f;
-				startTimer = false;
-			}
+		if(gun != null) {
+			manageGunRotation(core);
+		}
+		
+		if (hp <= 0f && alive) {
+			Packet06_Died packet = new Packet06_Died(getUsername());
+			packet.writeData(core.getGameClient());
 		}
 		
 		if (isNetworkMaster) {
+			
 			// Player movement
-			manageMovement(core, delta);
-			
-			if (core.input().isKeyDown(KeyEvent.VK_R)) {
-				gun.reloadGun();	
-			}
-			
-			if (core.input().isButton(MouseEvent.BUTTON1) && gun.getCanFire()) {
-				if (gun.getBulletFired() < gun.getMagazine()) {
-					// Add recoil
-					Vector2 recoil = new Vector2(core.input().getMouseX() - position().x - (scale().x / 2), core.input().getMouseY() - position().y - (scale().y / 2));
-					recoil.normalize();
-					addRecoil(recoil.multiply(-0.2f));
-					
-					// Bullet instance point
-					Vector2 instancePoint = new Vector2(position().x + (64 + (64 / 2)), position().y + (64 / 2));
-					instancePoint = instancePoint.rotatePoint(position().x + (scale().x / 2), position().y + (scale().y / 2), gun.getRotationDegrees());
-					
-					gun.fire();
-					
-					// Instance bullet
-//				((Shooter) parent).instanceBullet(instancePoint, recoil); 
-					
-					Packet04_BulletSpawn packet = new Packet04_BulletSpawn(this.getUsername(), recoil, instancePoint);
-					packet.writeData(core.getGameClient());
-					
-					startTimer = true;
-					gun.setCanFire(false);	
-				} else {
-					gun.playEmptySound();
-				}
-			}
-			
-			// Gun rotation
-			manageGunRotation(core);
-			
-			if (timer > maxTime) {
+			if (isAlive()) {
+				manageMovement(core, delta);
+				
+				if (equipGun) weaponManager.getInputs(core, this);
+				
+				// Gun rotation			
+				if (gun != null) gun.getInputs(delta, core);
+				
+				if (timer > maxTime) {
 //				System.out.println("Timeout: " + this.position().toString());
-				
-				Packet02_Movement packet = new Packet02_Movement(this.getUsername(), this.position());
-				packet.writeData(core.getGameClient());	
-				
-				timer = 0f;
+					
+					Packet02_Movement packet = new Packet02_Movement(this.getUsername(), this.position());
+					packet.writeData(core.getGameClient());	
+					
+					timer = 0f;
+				}				
 			}
 		} else {
 			this.position = this.position.linearInterpolate(puppetPosition, delta * .1f);
 			
-			gun.setRotationOrigin(position().x, position().y + (scale().y / 2));
-			gun.setRotationDegrees(puppetGunRotation);
-			gun.setPosition(puppetGunPosition);
-			
-			gun.flipImage(puppetGunRotated);
+			if (gun != null) {
+				gun.setRotationOrigin(position().x, position().y + (scale().y / 2));
+				gun.setRotationDegrees(puppetGunRotation);
+				gun.setPosition(puppetGunPosition);
+				
+				gun.flipImage(puppetGunRotated);				
+			}
 		}
 	}
 	
 	void manageGunRotation(Game core) {
-		Vector2 toMousePosition = new Vector2(core.input().getMouseY() - gun.position().y - (scale().y / 2), core.input().getMouseX() - gun.position().x - (scale().x / 2));
+//		Vector2 toMousePosition = new Vector2(core.input().getMouseY() - gun.position().y - (scale().y / 2), core.input().getMouseX() - gun.position().x - (scale().x / 2));
 //		gun.setRotationOrigin(position().x, position().y + (scale().y / 2));
+		gunDesiredPosition = position.add(new Vector2(30, 0));
 		
 		Vector2 gunDesiredPositionRotation = new Vector2(core.input().getMouseY() - position().y - (scale().y / 2), core.input().getMouseX() - position().x - (scale().x / 2));
 		float desiredRotation = (float) Math.atan2(gunDesiredPositionRotation.x, gunDesiredPositionRotation.y);
 		
-		gunDesiredPosition = position.add(new Vector2(30, 0));
 		gunDesiredPosition = gunDesiredPosition.rotatePoint(position().x, position().y, desiredRotation);
 		
 //		gun.setRotationDegrees((float) Math.atan2(toMousePosition.x, toMousePosition.y));
-		if (!gun.isReloading)
-			gun.setRotationDegrees(desiredRotation);
+		if (!gun.isReloading() && isNetworkMaster) gun.setRotationDegrees(desiredRotation);
 		
 		gun.setPosition(gunDesiredPosition);
 		
@@ -180,8 +172,10 @@ public class Joueur extends GameObject{
 		
 		gun.flipImage(flipped);
 		
-		Packet03_PlayerDetails details = new Packet03_PlayerDetails(this.getUsername(), gun.getRotationDegrees(), flipped, gunDesiredPosition);
-		details.writeData(core.getGameClient());
+		if (isNetworkMaster) {
+			Packet03_PlayerDetails details = new Packet03_PlayerDetails(this.getUsername(), gun.getRotationDegrees(), flipped, gunDesiredPosition);
+			details.writeData(core.getGameClient());			
+		}
 	}
 	
 	void manageMovement(Game core, float delta) {
@@ -204,8 +198,9 @@ public class Joueur extends GameObject{
 		if (core.input().isKey(KeyEvent.VK_A)) {
 			movement.x -= 1;
 		}
-		
+				
 		movement.normalize();
+		
 		animation = (float) ((Math.cos(time * frequence) * amplitude) * movement.length()) * delta;
 		velocity = velocity.linearInterpolate(movement.multiply(movementSpeed), acceleration * delta);
 		
@@ -214,7 +209,7 @@ public class Joueur extends GameObject{
 		translate(velocity);				
 	}
 	
-	void addRecoil(Vector2 recoil) {
+	public void addRecoil(Vector2 recoil) {
 		velocity = velocity.add(recoil);
 	}
 	
@@ -245,5 +240,70 @@ public class Joueur extends GameObject{
 		}
 		
 		core.getGameObjectsOnScene().remove(gunIndex);
+	}
+	
+	public void equipGun(Gun gun, Game core) {
+		this.gun = gun;
+		
+		System.out.println("Gun: " +  gun);
+		
+		if (isNetworkMaster) {
+			Packet05_WeaponSwitch packet = new Packet05_WeaponSwitch(getUsername(), gun);
+			packet.writeData(core.getGameClient());			
+		}
+		
+		this.gun.setJoueur(this);
+	}
+	
+	public void setGun(Gun gun, Game core) {
+		if (isNetworkMaster) return;
+		
+		if (this.gun != null) this.gun.destroy(core);
+		
+		this.gun = gun;
+		this.gun.setJoueur(this);
+		
+		this.gun.setActive(true);
+	}
+	
+	public WeaponManager getWeaponManager() {
+		return this.weaponManager;
+	}
+	
+	public Gun getGun() {
+		return this.gun;
+	}
+	
+	// Entity
+	public void takeDamage(float damage) {
+		this.hp -= damage;
+	}
+
+	public boolean isAlive() {
+		return alive;
+	}
+
+	public void setAlive(boolean alive) {
+		this.alive = alive;
+		this.setActive(alive);
+		
+		if (this.gun != null) this.gun.setActive(alive);
+	}
+
+	public boolean isEquipGun() {
+		return equipGun;
+	}
+
+	public void setEquipGun(Game core, boolean equipGun) {
+		if (!isNetworkMaster) {
+			Packet07_StartGame packet = new Packet07_StartGame(getUsername());
+			packet.writeData(core.getGameClient());
+		}
+		
+		this.equipGun = equipGun;
+	}
+	
+	public void setEquipGun(boolean equipGun) {
+		this.equipGun = equipGun;
 	}
 }

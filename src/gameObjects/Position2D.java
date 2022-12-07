@@ -16,7 +16,7 @@ public class Position2D extends GameObject{
 	}
 	
 	@Override
-	public void drawObject(Graphics2D g) {
+	public void drawObject(Graphics2D g, Camera camera) {
 		g.setColor(material);
 		g.fillRect((int) this.position().x, (int) this.position().y, this.scale().x, this.scale().y);
 	}

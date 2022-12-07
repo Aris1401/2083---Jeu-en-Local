@@ -1,7 +1,6 @@
 package core;
 
 import java.awt.Point;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
 import javax.swing.JFrame;
@@ -9,6 +8,7 @@ import javax.swing.JOptionPane;
 
 import gameCore.GamePanel;
 import gameCore.Shooter;
+import gameObjects.Camera;
 import gameObjects.GameObject;
 import inputManager.Input;
 import inputManager.WindowInput;
@@ -48,6 +48,8 @@ public class Game implements Runnable{
 	
 	boolean isServer = false;
 	
+	Camera currentCamera = null;
+	
 	public Game() {
 		initialiserGame();
 	}
@@ -82,10 +84,13 @@ public class Game implements Runnable{
 		windowInput = new WindowInput(this);
 		
 		// Network stuff
-		if (JOptionPane.showConfirmDialog(gameFrame.getGameFrame(), "Voule vous etre le serveur?") == JOptionPane.YES_OPTION) {
+		int optionPanel = JOptionPane.showConfirmDialog(gameFrame.getGameFrame(), "Voule vous etre le serveur?");
+		if (optionPanel == JOptionPane.YES_OPTION) {
 			server = new GameServer(this);
 			isServer = true;
 			server.start();
+		} else if (optionPanel == JOptionPane.CANCEL_OPTION) {
+			System.exit(0);
 		}
 		
 		if (isServer)
@@ -197,6 +202,14 @@ public class Game implements Runnable{
 		return this.gameFrame.getGameFrame();
 	}
 	
+	public void setCurrentCamera(Camera camera) {
+		this.currentCamera = camera;
+	}
+	
+	public Camera getCurrentCamera() {
+		return this.currentCamera;
+	}
+	
 	// Networking
 	public GameServer getGameServer() {
 		return this.server;
@@ -204,5 +217,13 @@ public class Game implements Runnable{
 	
 	public GameClient getGameClient() {
 		return this.client;
+	}
+
+	public boolean isServer() {
+		return isServer;
+	}
+
+	public void setServer(boolean isServer) {
+		this.isServer = isServer;
 	}
 } 

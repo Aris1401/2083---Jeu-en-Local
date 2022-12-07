@@ -11,6 +11,7 @@ import java.net.InetAddress;
 
 import javax.imageio.ImageIO;
 
+import core.Game;
 import engineClasses.Vector2;
 
 public class GameObject {
@@ -26,10 +27,10 @@ public class GameObject {
 	protected Color material = new Color(0, 0, 0);
 	
 	//Sprite
-	BufferedImage sprite;
+	protected BufferedImage sprite;
 	
 	// Rotations
-	float rotationDegree = 0;
+	protected float rotationDegree = 0;
 	
 	// Multiplayer Propreties (optional)
 	InetAddress ipAdress;
@@ -67,6 +68,14 @@ public class GameObject {
 		return this.position;
 	}
 	
+	public Vector2 getGlobalPosition(Game core) {
+		if (core.getCurrentCamera() != null) {
+			return position().add(core.getCurrentCamera().position);
+		}
+		
+		return position();
+	}
+	
 	public Point scale() {
 		return new Point((int) transform.width, (int) transform.height);
 	}
@@ -76,7 +85,7 @@ public class GameObject {
 	}
 	
 	//Draw
-	public void drawObject(Graphics2D g) {
+	public void drawObject(Graphics2D g, Camera camera) {
 		g.rotate(rotationDegree);
 		g.fillOval((int) position.x, (int) position.y, (int) transform.width, (int) transform.height);
 	}
@@ -133,5 +142,17 @@ public class GameObject {
 	
 	public boolean getIsNetworkMaster() {
 		return this.isNetworkMaster;
+	}
+	
+	public void destroy(Game core) {
+		int index = -1;
+		
+		for (int i = 0; i < core.getGameObjectsOnScene().size(); i++) {
+			if (core.getGameObjectsOnScene().get(i).equals(this)) {
+				index = i;
+			}
+		}
+		
+		if (index != -1) core.getGameObjectsOnScene().remove(index);
 	}
 }

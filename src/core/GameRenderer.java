@@ -8,7 +8,9 @@ import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
+import engineClasses.Vector2;
 import gameObjects.GameObject;
+import uiComponents.UIElement;
 
 public class GameRenderer extends JPanel{
 	private static final long serialVersionUID = 1L;
@@ -34,8 +36,10 @@ public class GameRenderer extends JPanel{
 		
 		if (gameObjects != null) {
 			for (int i = 0; i < gameObjects.size(); i++) {
-				if (gameObjects.get(i).getIsActive())
-					gameObjects.get(i).drawObject(g2);
+				if (gameObjects.get(i).getIsActive()) {
+					gameObjects.get(i).drawObject(g2, core.getCurrentCamera());	
+					
+				}
 			}
 		}
 	}

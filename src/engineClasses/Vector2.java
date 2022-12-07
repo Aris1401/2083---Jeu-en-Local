@@ -79,4 +79,9 @@ public class Vector2 {
 	public String toString() {
 		return this.x + "," + this.y;
 	}
+	
+	
+	public Vector2 clone(){
+		return new Vector2(x, y);
+	}
 }

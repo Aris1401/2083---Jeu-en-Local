@@ -87,11 +87,11 @@ public class Boule extends GameObject{
 	}
 	
 	@Override
-	public void drawObject(Graphics2D g) {
+	public void drawObject(Graphics2D g, Camera camera) {
 		g.setColor(new Color(0f, 0f, 0f, .4f));
 		g.fillOval((int) this.position().x, (int) this.position().y + 2, this.scale().x, this.scale().y);
 		
-		super.drawObject(g);
+		super.drawObject(g, camera);
 	}
 	
 	// COllisions
