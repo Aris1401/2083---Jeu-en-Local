@@ -3,14 +3,14 @@ package uiComponents;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
-import java.util.Vector;
 
 import core.Game;
 import engineClasses.Vector2;
+import gameObjects.Camera;
 
 public class UIButton extends UIElement{
 	String text = " ";
-	Vector2 textOffset = new Vector2(-17, 5);
+	Vector2 textOffset = new Vector2(-40, 5);
 	
 	public UIButton(float width, float height, Game core) {
 		super(width, height, core);
@@ -25,7 +25,7 @@ public class UIButton extends UIElement{
 	}
 	
 	@Override
-	public void drawObject(Graphics2D g) {
+	public void drawObject(Graphics2D g, Camera camera) {
 		g.setColor(Color.BLACK);
 		g.fillRect((int) this.position().x, (int) this.position().y, this.scale().x, this.scale().y);
 		
@@ -37,7 +37,13 @@ public class UIButton extends UIElement{
 	}
 	
 	public boolean isButtonHovered(Vector2 mousePos) {
-		if ((mousePos.x > this.position.x && mousePos.x < this.position.x + this.scale().x) && (mousePos.y > this.position.y && mousePos.y < this.position.y + this.scale().y)) {
+		Vector2 offset = new Vector2();
+		
+		if (core.getCurrentCamera() != null) {
+			offset = core.getCurrentCamera().getPosition().clone();
+		}
+		
+		if ((mousePos.x - offset.x > this.position.x && mousePos.x - offset.x < this.position.x + this.scale().x) && (mousePos.y - offset.y > this.position.y && mousePos.y - offset.y < this.position.y + this.scale().y)) {
 			return true;
 		}
 		

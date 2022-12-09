@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 
 import core.Game;
-import gameObjects.GameObject;
+import gameObjects.Camera;
 
 public class Jauge extends UIElement{
 	float maxPower = 0;
@@ -22,7 +22,7 @@ public class Jauge extends UIElement{
 	}
 	
 	@Override
-	public void drawObject(Graphics2D g) {
+	public void drawObject(Graphics2D g, Camera camera) {
 		g.fillRect((int) position.x, (int) position.y, scale().x, scale().y);
 		g.setColor(Color.BLUE);
 		g.fillRect((int) position.x, (int) position.y, scale().x, (int) (scale().y - currentPower));

@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 
 import core.Game;
+import gameObjects.Camera;
 
 public class Filter extends UIElement{
 	public Filter(float width, float height, Game core) {
@@ -13,7 +14,7 @@ public class Filter extends UIElement{
 	}
 	
 	@Override
-	public void drawObject(Graphics2D g) {
+	public void drawObject(Graphics2D g, Camera camera) {
 		g.setColor(material);
 		g.fillRect((int) this.position().x, (int) this.position().y, this.scale().x, this.scale().y);
 		

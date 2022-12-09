@@ -13,6 +13,8 @@ import javax.imageio.ImageIO;
 
 import core.Game;
 import engineClasses.Vector2;
+import net.packets.Packet;
+import net.packets.Packet11_DestroyBullet;
 
 public class GameObject {
 	//Transform
@@ -153,6 +155,21 @@ public class GameObject {
 			}
 		}
 		
-		if (index != -1) core.getGameObjectsOnScene().remove(index);
+		if (index != -1) {
+			core.getGameObjectsOnScene().remove(index);
+		}
+	}
+	
+	public void syncDestroy(Game core, int indexOnScene) {
+		Packet11_DestroyBullet packet = new Packet11_DestroyBullet(getId(), indexOnScene);
+		packet.writeData(core.getGameClient());
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
 	}
 }

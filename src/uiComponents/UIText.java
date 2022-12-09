@@ -5,7 +5,7 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 
 import core.Game;
-import gameObjects.GameObject;
+import gameObjects.Camera;
 
 public class UIText extends UIElement{
 	String text = "Votre texte ici";
@@ -14,7 +14,7 @@ public class UIText extends UIElement{
 	public UIText(int tailleTexte, Game core) {
 		super(tailleTexte, tailleTexte, core);
 		
-		this.material = Color.WHITE;
+		this.material = Color.BLACK;
 		this.collsions = false;
 		
 		textFont = new Font("Open sans", Font.BOLD, tailleTexte);
@@ -32,7 +32,7 @@ public class UIText extends UIElement{
 	}
 	
 	@Override
-	public void drawObject(Graphics2D g) {
+	public void drawObject(Graphics2D g, Camera camera) {
 		g.setColor(material);
 		g.setFont(textFont);
 		g.drawString(text, this.position().x, (int) this.position().y);

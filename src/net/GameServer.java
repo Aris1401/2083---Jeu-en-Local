@@ -1,6 +1,7 @@
 package net;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -10,13 +11,21 @@ import java.util.ArrayList;
 import core.Game;
 import engineClasses.Vector2;
 import gameObjects.Joueur;
+import gameObjects.guns.Gun;
 import net.packets.Packet;
 import net.packets.Packet.TypesPacket;
 import net.packets.Packet00_Login;
+import net.packets.Packet10_TakeDamage;
+import net.packets.Packet11_DestroyBullet;
+import net.packets.Packet12_ChangeScene;
+import net.packets.Packet13_Alive;
 import net.packets.Packet01_Disconnect;
 import net.packets.Packet02_Movement;
 import net.packets.Packet03_PlayerDetails;
 import net.packets.Packet04_BulletSpawn;
+import net.packets.Packet05_WeaponSwitch;
+import net.packets.Packet06_Died;
+import net.packets.Packet07_StartGame;
 
 public class GameServer extends Thread{
 	private DatagramSocket socket;
@@ -66,7 +75,7 @@ public class GameServer extends Thread{
 			break;
 		case LOGIN:
 			packet = new Packet00_Login(data);
-			System.out.println(((Packet00_Login) packet).getUsername() + " s'est connecter (" + address.getHostAddress() + ")");
+			System.out.println("SERVER: " + ((Packet00_Login) packet).getUsername() + " s'est connecter (" + address.getHostAddress() + ")");
 			
 			Joueur joueur = core.getCurrentRunningGame().instancePlayerAt(new Vector2(100, 100), true);
 			joueur.setIpAdress(address);
@@ -90,9 +99,84 @@ public class GameServer extends Thread{
 			
 			packet.writeData(this);
 			break;
+		case CHANGE_WEAPON:
+			packet = new Packet05_WeaponSwitch(data);
+			
+			handleWeaponChange((Packet05_WeaponSwitch) packet);
+			break;
+		case DIED:
+			packet = new Packet06_Died(data);
+			
+			int player_index = getJoueurIndex(((Packet06_Died) packet).getUsername());
+			joueursConnectees.get(player_index).setAlive(false);
+			
+			packet.writeData(this);
+			break;
+		case ALIVE:
+			packet = new Packet13_Alive(data);
+			
+			player_index = getJoueurIndex(((Packet13_Alive) packet).getUsername());
+			packet.writeData(this);
+			
+			break;
+		case START_GAME:
+			packet = new Packet07_StartGame(data);
+			
+			startGame((Packet07_StartGame) packet);
+			break;
+		case TAKE_DAMAGE:
+			packet = new Packet10_TakeDamage(data);
+			
+			dealWithDamage((Packet10_TakeDamage) packet);
+			
+			break;
+		case DESTROY_BULLET:
+			packet = new Packet11_DestroyBullet(data);
+			
+			packet.writeData(this);
+			
+			break;
+		case CHANGE_SCENE:
+			packet = new Packet12_ChangeScene(data);
+			
+			packet.writeData(this);
 		default:
 			break;
 			
+		}
+	}
+
+	private void dealWithDamage(Packet10_TakeDamage packet) {
+		if (getJoueurIn(packet.getUsername()) != null) {
+			int joueurIndex = getJoueurIndex(packet.getUsername());
+			
+			this.joueursConnectees.get(joueurIndex).setHp(core, packet.getHp());
+			
+			packet.writeData(this);
+		}
+	}
+
+	private void startGame(Packet07_StartGame packet) {
+		if (getJoueurIn(packet.getUsername()) != null) {
+			int joueurIndex = getJoueurIndex(packet.getUsername());
+			
+			this.joueursConnectees.get(joueurIndex).setEquipGun(core, true);
+			
+			packet.writeData(this);
+		}
+	}
+
+	private void handleWeaponChange(Packet05_WeaponSwitch packet) {
+		if (getJoueurIn(packet.getUsername()) != null) {
+			int joueurIndex = getJoueurIndex(packet.getUsername());
+			try {
+				this.joueursConnectees.get(joueurIndex).setGun((Gun) packet.getCurrentGun().getConstructor().newInstance(), core);
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+				e.printStackTrace();
+			}
+			
+			packet.writeData(this);
 		}
 	}
 
@@ -113,14 +197,14 @@ public class GameServer extends Thread{
 			packet.writeData(this);
 		}
 	}
-	
-	
 
 	public void addConnection(Joueur joueur, Packet00_Login packet) {
 		boolean alreadyConnected = false;
 		
+		Packet00_Login temp = packet;
 		for (Joueur joueur_ : joueursConnectees) {
-			if (joueur_.getUsername().equalsIgnoreCase(joueur.getUsername())) {
+			packet = temp;
+			if (joueur.getUsername().equalsIgnoreCase(joueur_.getUsername())) {
 				if (joueur_.getIpAdress() == null) {
 					joueur_.setIpAdress(joueur.getIpAdress());
 				}

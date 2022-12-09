@@ -87,12 +87,13 @@ public class Gun extends GameObject{
 		AffineTransform oldTrans = g.getTransform();
 		
 		Vector2 offset = new Vector2();
-		
+		Vector2 cameraOffset = new Vector2();
 		if (camera != null) {
 			offset = camera.getPosition().clone();
+			cameraOffset = camera.getOffset();
 		}
 		
-		g.rotate(rotationDegree, position.x + (64 / 2) - offset.x, position.y + (64 / 2) - offset.y);
+		g.rotate(rotationDegree, position.x + (64 / 2) - offset.x + cameraOffset.x, position.y + (64 / 2) - offset.y + cameraOffset.y);
 //			g.rotate(rotationDegree, rotationOrigin.x + (scale().x / 2), rotationOrigin.y + (scale().y));		
 		if (isReloading()) {
 			rotationDegree += 0.2f;
@@ -104,9 +105,9 @@ public class Gun extends GameObject{
 		}
 		
 		if (!isFlipped) 
-			g.drawImage(sprite, (int) (this.position().x - offset.x), (int) (this.position().y - offset.y), 64, 64, null);
+			g.drawImage(sprite, (int) (this.position().x - offset.x + cameraOffset.x), (int) (this.position().y - offset.y + cameraOffset.y), 64, 64, null);
 		else
-			g.drawImage(sprite, (int) (this.position().x - offset.x), (int) (this.position().y + 64 - offset.y), 64, -64, null);	
+			g.drawImage(sprite, (int) (this.position().x - offset.x + cameraOffset.y), (int) (this.position().y + 64 - offset.y + cameraOffset.y), 64, -64, null);	
 		
 		g.setTransform(oldTrans);
 	}
@@ -162,8 +163,12 @@ public class Gun extends GameObject{
 				Vector2 instancePoint = new Vector2(position().x + (64), position().y + (64 / 2));
 				instancePoint = instancePoint.rotatePoint(position().x + (64 / 2), position().y + (64 / 2), this.getRotationDegrees());
 				
+				if (core.getCurrentCamera() != null) {
+					core.getCurrentCamera().applyShake();
+				}
+				
 				this.fire();
-			    
+				
 				// Instance bullet
 //			((Shooter) parent).instanceBullet(instancePoint, recoil); 
 				

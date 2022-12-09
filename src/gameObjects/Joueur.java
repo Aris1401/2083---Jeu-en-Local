@@ -10,6 +10,8 @@ import gameObjects.guns.Desert_Eagle;
 import gameObjects.guns.Gun;
 import gameObjects.guns.Rifle;
 import gameObjects.guns.WeaponManager;
+import net.packets.Packet10_TakeDamage;
+import net.packets.Packet13_Alive;
 import net.packets.Packet02_Movement;
 import net.packets.Packet03_PlayerDetails;
 import net.packets.Packet05_WeaponSwitch;
@@ -91,13 +93,15 @@ public class Joueur extends GameObject{
 		g.setColor(material);
 		
 		Vector2 offset = new Vector2();
+		Vector2 cameraOffset = new Vector2();
 		if (camera != null) {
 			offset = camera.getPosition().clone();
+			cameraOffset = camera.getOffset();
 		}
 		
-		g.drawImage(sprite, (int) (this.position().x - offset.x), (int) ((this.position().y + animation) - offset.y), (int) this.scale().x, (int) this.scale().y, null);
+		g.drawImage(sprite, (int) (this.position().x - offset.x + cameraOffset.x), (int) ((this.position().y + animation) - offset.y + cameraOffset.y), (int) this.scale().x, (int) this.scale().y, null);
 //		g.fillRect((int) this.position().x, (int) (this.position().y + animation), (int) this.scale().x, (int) this.scale().y);
-		g.drawString(username, this.position().x - offset.x, this.position().y - (2) + animation - offset.y);
+		g.drawString(username, this.position().x - offset.x + cameraOffset.x, this.position().y - (2) + animation - offset.y + cameraOffset.y);
 	}
 	
 	public void setVelocity(Vector2 velocity) {
@@ -111,11 +115,6 @@ public class Joueur extends GameObject{
 			manageGunRotation(core);
 		}
 		
-		if (hp <= 0f && alive) {
-			Packet06_Died packet = new Packet06_Died(getUsername());
-			packet.writeData(core.getGameClient());
-		}
-		
 		if (isNetworkMaster) {
 			
 			// Player movement
@@ -125,7 +124,7 @@ public class Joueur extends GameObject{
 				if (equipGun) weaponManager.getInputs(core, this);
 				
 				// Gun rotation			
-				if (gun != null) gun.getInputs(delta, core);
+				if (gun != null && equipGun) gun.getInputs(delta, core);
 				
 				if (timer > maxTime) {
 //				System.out.println("Timeout: " + this.position().toString());
@@ -275,8 +274,13 @@ public class Joueur extends GameObject{
 	}
 	
 	// Entity
-	public void takeDamage(float damage) {
+	public void takeDamage(Game core, float damage) {
 		this.hp -= damage;
+		
+		System.out.println("Took damage " + hp);
+		
+		Packet10_TakeDamage packet = new Packet10_TakeDamage(getUsername(), this.hp);
+		packet.writeData(core.getGameClient());
 	}
 
 	public boolean isAlive() {
@@ -301,9 +305,22 @@ public class Joueur extends GameObject{
 		}
 		
 		this.equipGun = equipGun;
+		
+		if (this.equipGun == false && this.gun != null) {
+			gun.setActive(false);
+		}
 	}
 	
 	public void setEquipGun(boolean equipGun) {
 		this.equipGun = equipGun;
+	}
+
+	public void setHp(Game core, float hp) {
+		this.hp = hp;
+		
+		if (this.hp <= 0f && alive) {
+			Packet06_Died packet = new Packet06_Died(getUsername());
+			packet.writeData(core.getGameClient());			
+		}
 	}
 }

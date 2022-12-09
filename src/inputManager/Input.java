@@ -9,6 +9,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
 import core.Game;
+import engineClasses.Vector2;
 
 public class Input implements KeyListener, MouseListener, MouseMotionListener, MouseWheelListener{
 	private Game gc;
@@ -76,14 +77,26 @@ public class Input implements KeyListener, MouseListener, MouseMotionListener, M
 	
 	@Override
 	public void mouseDragged(MouseEvent e) {
-		mouseX = (int) (e.getX() / gc.getScale());
-		mouseY = (int) (e.getY() / gc.getScale());
+		Vector2 offset = new Vector2();
+		
+		if (gc.getCurrentCamera() != null) {
+			offset = gc.getCurrentCamera().getPosition().clone();
+		}
+		
+		mouseX = (int) ((e.getX() + offset.x / gc.getScale()));
+		mouseY = (int) ((e.getY() + offset.y / gc.getScale()));
 	}
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		mouseX = (int) (e.getX() / gc.getScale());
-		mouseY = (int) (e.getY() / gc.getScale());
+		Vector2 offset = new Vector2();
+		
+		if (gc.getCurrentCamera() != null) {
+			offset = gc.getCurrentCamera().getPosition().clone();
+		}
+		
+		mouseX = (int) ((e.getX() + offset.x / gc.getScale()));
+		mouseY = (int) ((e.getY() + offset.y / gc.getScale()));
 	}
 
 	@Override
