@@ -124,7 +124,8 @@ public class Game implements Runnable{
 			lastTimeCheck = currentTime;
 			
 			if (deltaTime >= 1) {
-				updateGame((float) deltaTime);
+				if (currentCamera != null) currentCamera.update((float) deltaTime);
+				updateGame((float) deltaTime);				
 				deltaTime--;
 			}
 			
