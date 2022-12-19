@@ -2,7 +2,6 @@ package gameObjects;
 
 import org.joml.Quaterniond;
 import org.joml.SimplexNoise;
-import org.joml.Vector2d;
 
 import core.Game;
 import engineClasses.EngineMath;

@@ -8,9 +8,8 @@ import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
-import engineClasses.Vector2;
 import gameObjects.GameObject;
-import uiComponents.UIElement;
+import gameObjects.Joueur;
 
 public class GameRenderer extends JPanel{
 	private static final long serialVersionUID = 1L;
@@ -34,12 +33,25 @@ public class GameRenderer extends JPanel{
 		Graphics2D g2 = (Graphics2D) g;
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		
+		ArrayList<GameObject> topObjects = new ArrayList<GameObject>();
+		
 		if (gameObjects != null) {
 			for (int i = 0; i < gameObjects.size(); i++) {
+				if (gameObjects.get(i) instanceof Joueur) {
+					topObjects.add(gameObjects.get(i));
+					
+					continue;
+				}
 				if (gameObjects.get(i).getIsActive()) {
 					gameObjects.get(i).drawObject(g2, core.getCurrentCamera());	
 					
 				}
+			}
+		}
+		
+		for (int i = 0; i < topObjects.size(); i++) {
+			if (topObjects.get(i).getIsActive()) {
+				topObjects.get(i).drawObject(g2, core.getCurrentCamera());
 			}
 		}
 	}

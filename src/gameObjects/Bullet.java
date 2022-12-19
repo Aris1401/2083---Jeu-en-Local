@@ -41,7 +41,7 @@ public class Bullet extends GameObject{
 		Vector2 cameraOffset = new Vector2();
 		if (camera != null) {
 			offset = camera.getPosition().clone();
-			cameraOffset = camera.getOffset();
+			cameraOffset = camera.getOffset().clone();
 		}
 		
 		g.fillRect((int) (position().x - offset.x + cameraOffset.x), (int) (position().y - offset.y + cameraOffset.y), (int) scale().x, (int) scale().y);

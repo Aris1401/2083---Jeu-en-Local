@@ -105,6 +105,15 @@ public class Game implements Runnable{
 		
 		startThread();
 	}
+	
+	public void endGame() throws Exception{
+		if (isServer) server.join();
+		client.join();
+		
+		gameThread.join();
+		
+		getGameFrame().dispose();
+	}
 
 	@Override
 	public void run() {

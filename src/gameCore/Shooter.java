@@ -1,14 +1,13 @@
 package gameCore;
 
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
 import javax.swing.JOptionPane;
 
-import Scenes.MainGame;
 import Scenes.Lobby;
+import Scenes.MainGame;
 import core.Game;
 import engineClasses.Scene;
 import engineClasses.SceneManager;
@@ -18,9 +17,9 @@ import gameObjects.Camera;
 import gameObjects.Joueur;
 import gameObjects.guns.Gun;
 import net.packets.Packet00_Login;
-import net.packets.Packet11_DestroyBullet;
 import net.packets.Packet12_ChangeScene;
 import net.packets.Packet13_Alive;
+import uiComponents.Jauge;
 import uiComponents.UIButton;
 import uiComponents.UIText;
 
@@ -37,6 +36,7 @@ public class Shooter {
 	// UI
 	UIText winnerText;
 	UIButton startButton;
+	Jauge healthBar;
 
 	boolean gameHasStarted = false;
 
@@ -89,6 +89,9 @@ public class Shooter {
 		startButton.setPosition(new Vector2(core.getViewportRect().x - startButton.scale().x,
 				core.getViewportRect().y - startButton.scale().y));
 		startButton.setText("Start Game");
+		
+		healthBar = new Jauge(100f, 20f, core, joueur.getHp());
+		healthBar.setPosition(new Vector2(10f, core.getViewportRect().y - healthBar.scale().y - 10f));
 
 		if (core.getGameServer() != null) {
 			core.getGameServer().addConnection(joueur, packet);
@@ -139,7 +142,9 @@ public class Shooter {
 			
 			
 			if (alivePlayers.size() <= 1 && alivePlayers.size() > 0) {
-				System.out.println(alivePlayers.get(0).getUsername());
+				int index = getJoueurIndex(alivePlayers.get(0).getUsername());
+				
+				System.out.println("Winner: " + players.get(index).getUsername());
 				if (!winTimerStarted) {
 					winnerText.setActive(true);
 					
@@ -178,6 +183,8 @@ public class Shooter {
 			players.get(i).setHp(core, 1000f);
 			players.get(i).setEquipGun(core, true);
 		}
+		
+		healthBar.setCurrentPower(joueur.getHp());
 		
 		syncChangeScene("MainGame");
 
@@ -342,6 +349,7 @@ public class Shooter {
 
 		if (index != -1) {
 			players.get(index).setHp(core, hp);
+			if (players.get(index).getUsername().equals(joueur.getUsername())) healthBar.setCurrentPower(hp);
 		}
 	}
 
@@ -404,5 +412,16 @@ public class Shooter {
 	public void syncChangeScene(String name) {
 		Packet12_ChangeScene packet = new Packet12_ChangeScene(name);
 		packet.writeData(core.getGameClient());
+	}
+	
+	public void disonnectedFromServer() {
+		JOptionPane.showMessageDialog(core.getGameFrame(), "Deconnecter du serveur");
+		
+		try {
+			core.endGame();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
 	}
  }
