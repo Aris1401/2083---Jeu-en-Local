@@ -2,7 +2,6 @@ package net.packets;
 
 import java.util.ArrayList;
 
-import engineClasses.Vector2;
 import gameObjects.guns.Desert_Eagle;
 import gameObjects.guns.Gun;
 import gameObjects.guns.Rifle;

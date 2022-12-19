@@ -1,7 +1,5 @@
 package gameObjects.guns;
 
-import core.Game;
-
 public class GunTypes {
 	public enum gunTypes{
 		primary("primary"), secondary("secondary");

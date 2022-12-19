@@ -4,7 +4,6 @@ import java.awt.Color;
 
 import core.Game;
 import engineClasses.Scene;
-import engineClasses.SceneManager;
 import gameObjects.Background;
 
 public class MainGame implements Scene{

@@ -13,7 +13,6 @@ import javax.imageio.ImageIO;
 
 import core.Game;
 import engineClasses.Vector2;
-import net.packets.Packet;
 import net.packets.Packet11_DestroyBullet;
 
 public class GameObject {

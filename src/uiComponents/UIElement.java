@@ -1,7 +1,6 @@
 package uiComponents;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
 
 import core.Game;
 import gameObjects.GameObject;

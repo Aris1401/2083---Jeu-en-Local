@@ -90,7 +90,7 @@ public class Gun extends GameObject{
 		Vector2 cameraOffset = new Vector2();
 		if (camera != null) {
 			offset = camera.getPosition().clone();
-			cameraOffset = camera.getOffset();
+			cameraOffset = camera.getOffset().clone();
 		}
 		
 		g.rotate(rotationDegree, position.x + (64 / 2) - offset.x + cameraOffset.x, position.y + (64 / 2) - offset.y + cameraOffset.y);

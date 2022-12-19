@@ -16,6 +16,7 @@ import net.packets.Packet10_TakeDamage;
 import net.packets.Packet11_DestroyBullet;
 import net.packets.Packet12_ChangeScene;
 import net.packets.Packet13_Alive;
+import net.packets.Packet14_DisconnectServer;
 import net.packets.Packet01_Disconnect;
 import net.packets.Packet02_Movement;
 import net.packets.Packet03_PlayerDetails;
@@ -136,6 +137,11 @@ public class GameClient extends Thread{
 			packet = new Packet12_ChangeScene(data);
 			
 			core.getCurrentRunningGame().changeScene(((Packet12_ChangeScene) packet).getSceneName());
+			break;
+		case DISCONNECT_SERVER:
+			packet = new Packet14_DisconnectServer();
+			
+			core.getCurrentRunningGame().disonnectedFromServer();
 		default:
 			break;
 			

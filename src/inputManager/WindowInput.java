@@ -5,6 +5,7 @@ import java.awt.event.WindowListener;
 
 import core.Game;
 import net.packets.Packet01_Disconnect;
+import net.packets.Packet14_DisconnectServer;
 
 public class WindowInput implements WindowListener{
 	
@@ -24,6 +25,11 @@ public class WindowInput implements WindowListener{
 
 	@Override
 	public void windowClosing(WindowEvent e) {
+		if (core.isServer()) {
+			Packet14_DisconnectServer packet = new Packet14_DisconnectServer();
+			packet.writeData(core.getGameClient());
+		}
+		
 		Packet01_Disconnect packet = new Packet01_Disconnect(core.getCurrentRunningGame().getCurrentJoueur().getUsername());
 		packet.writeData(core.getGameClient());
 	}

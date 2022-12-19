@@ -19,6 +19,7 @@ import net.packets.Packet10_TakeDamage;
 import net.packets.Packet11_DestroyBullet;
 import net.packets.Packet12_ChangeScene;
 import net.packets.Packet13_Alive;
+import net.packets.Packet14_DisconnectServer;
 import net.packets.Packet01_Disconnect;
 import net.packets.Packet02_Movement;
 import net.packets.Packet03_PlayerDetails;
@@ -138,6 +139,11 @@ public class GameServer extends Thread{
 			break;
 		case CHANGE_SCENE:
 			packet = new Packet12_ChangeScene(data);
+			
+			packet.writeData(this);
+			break;
+		case DISCONNECT_SERVER:
+			packet = new Packet14_DisconnectServer();
 			
 			packet.writeData(this);
 		default:

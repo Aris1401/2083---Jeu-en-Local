@@ -11,7 +11,6 @@ import gameObjects.guns.Gun;
 import gameObjects.guns.Rifle;
 import gameObjects.guns.WeaponManager;
 import net.packets.Packet10_TakeDamage;
-import net.packets.Packet13_Alive;
 import net.packets.Packet02_Movement;
 import net.packets.Packet03_PlayerDetails;
 import net.packets.Packet05_WeaponSwitch;
@@ -96,7 +95,7 @@ public class Joueur extends GameObject{
 		Vector2 cameraOffset = new Vector2();
 		if (camera != null) {
 			offset = camera.getPosition().clone();
-			cameraOffset = camera.getOffset();
+			cameraOffset = camera.getOffset().clone();
 		}
 		
 		g.drawImage(sprite, (int) (this.position().x - offset.x + cameraOffset.x), (int) ((this.position().y + animation) - offset.y + cameraOffset.y), (int) this.scale().x, (int) this.scale().y, null);
@@ -108,6 +107,10 @@ public class Joueur extends GameObject{
 		this.velocity = velocity;
 	}
 	
+	public float getHp() {
+		return hp;
+	}
+
 	public void update(Game core, float delta) {
 		timer += delta;
 		
